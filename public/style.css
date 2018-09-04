@@ -22,6 +22,7 @@ button:focus, input:focus {
     opacity: 0.8;
 }
 
+/*target only an attribute */
 [v-cloak] {
     display: none !important;
 }

@@ -1,6 +1,11 @@
 const price = 9.99;
 const loadNum = 10;
 
+var pusher = new Pusher('7a14f8420785af44774d', { //for homework, get server to push these vales when server writes html to client 
+    cluster: 'us2',
+    encrypted: true
+})
+
 new Vue({
     el: '#app',
     data: {
@@ -14,14 +19,26 @@ new Vue({
         newSearch: 'airplanes',
         lastSearch: '',
         loading: false,
-        price
+        price,
+        pusherUpdate: false
     },
     computed: {
         noMoreItems: function() {
             return this.results.length === this.items.length && this.results.length > 0;
 
         }
-
+    },
+    watch: {
+        cart: {
+            handler: function(val) {
+                if (!this.pusherUpdate) {
+                this.$http.post('/cart_update', val); 
+                } else {
+                    this.pusherUpdate = false;
+                }
+            },
+            deep: true, //watcher will watch anything nested within cart
+        }
     },
     methods: {
         appendItems: function () {
@@ -97,5 +114,15 @@ new Vue({
         watcher.enterViewport(function () {
             vueInstance.appendItems();
         });
+
+        var channel = pusher.subscribe('cart');
+        channel.bind('update', function(data) {
+            vueInstance.pusherUpdate = true;
+            vueInstance.cart = data;
+            vueInstance.total = 0;
+            for (var i = 0; i < vueInstance.cart.length; i++ ) {
+                vueInstance.total += price * vueInstance.cart[i].qty;
+            }
+        }) //execute custom logic based on different events
     }
 })
